@@ -1,0 +1,57 @@
+# ==================================
+# Python / Backend
+# ==================================
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+*.egg-info/
+dist/
+build/
+.eggs/
+*.egg
+.venv/
+venv/
+env/
+*.db
+*.sqlite3
+
+# ==================================
+# Node.js / Frontend
+# ==================================
+node_modules/
+.next/
+out/
+.vercel
+
+# ==================================
+# Environment Variables
+# ==================================
+.env
+.env.local
+.env.*.local
+
+# ==================================
+# IDE & OS
+# ==================================
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+.DS_Store
+Thumbs.db
+
+# ==================================
+# Testing & Coverage
+# ==================================
+.coverage
+htmlcov/
+.pytest_cache/
+coverage/
+.nyc_output/
+
+# ==================================
+# Misc
+# ==================================
+*.log
