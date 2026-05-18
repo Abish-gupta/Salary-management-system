@@ -79,7 +79,7 @@ export const api = {
     return res.json();
   },
 
-  async getSpecificCountryStats(countryName: string): Promise<any> {
+  async getSpecificCountryAnalytics(countryName: string): Promise<any> {
     const res = await fetch(`${API_BASE_URL}/analytics/country/${encodeURIComponent(countryName)}`);
     if (!res.ok) throw new Error('Failed to fetch specific country analytics');
     return res.json();
