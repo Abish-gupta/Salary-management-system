@@ -42,7 +42,12 @@ app.add_middleware(
 )
 
 
+from app.routers import employees, analytics
+
 @app.get("/health", tags=["system"])
 def health_check() -> dict[str, str]:
     """Health check endpoint for monitoring and deployment readiness probes."""
     return {"status": "healthy"}
+
+app.include_router(employees.router)
+app.include_router(analytics.router)
