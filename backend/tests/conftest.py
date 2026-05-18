@@ -29,6 +29,7 @@ engine = create_engine(
     connect_args={"check_same_thread": False},
 )
 
+
 # Enable foreign key enforcement (SQLite disables it by default)
 @event.listens_for(engine, "connect")
 def enable_foreign_keys(dbapi_conn, _connection_record):
@@ -41,6 +42,7 @@ TestingSessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engin
 
 
 # ── Fixtures ───────────────────────────────────────────────────────────────────
+
 
 @pytest.fixture(scope="session", autouse=True)
 def create_tables():
@@ -64,7 +66,8 @@ def db_session() -> Session:
     yield session
 
     session.close()
-    transaction.rollback()
+    if transaction.is_active:
+        transaction.rollback()
     connection.close()
 
 
@@ -75,6 +78,7 @@ def client(db_session: Session) -> TestClient:
     Overrides the real `get_db` dependency so API tests never touch
     the production database.
     """
+
     def override_get_db():
         try:
             yield db_session
