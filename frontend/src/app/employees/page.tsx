@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, type Employee, type PaginatedResponse } from '@/lib/api';
-import { Search, Plus, Loader2 } from 'lucide-react';
+import { Search, Plus, Loader2, Edit2, Trash2, X } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -17,27 +17,71 @@ export default function EmployeesPage() {
   const [page, setPage] = useState(1);
   const limit = 10;
 
-  useEffect(() => {
-    const fetchEmployees = async () => {
-      setLoading(true);
-      try {
-        const skip = (page - 1) * limit;
-        const res = await api.getEmployees(skip, limit, search);
-        setData(res);
-      } catch (error) {
-        console.error("Failed to fetch employees", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
+  const [formData, setFormData] = useState<Partial<Employee>>({});
+  const [isSaving, setIsSaving] = useState(false);
 
-    // Add a small debounce for typing search
+  const fetchEmployees = async () => {
+    setLoading(true);
+    try {
+      const skip = (page - 1) * limit;
+      const res = await api.getEmployees(skip, limit, search);
+      setData(res);
+    } catch (error) {
+      console.error("Failed to fetch employees", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
     const timer = setTimeout(() => {
       fetchEmployees();
     }, 300);
-
     return () => clearTimeout(timer);
   }, [page, limit, search]);
+
+  const openAddModal = () => {
+    setEditingEmployee(null);
+    setFormData({});
+    setIsModalOpen(true);
+  };
+
+  const openEditModal = (emp: Employee) => {
+    setEditingEmployee(emp);
+    setFormData(emp);
+    setIsModalOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Are you sure you want to delete this employee?')) return;
+    try {
+      await api.deleteEmployee(id);
+      fetchEmployees();
+    } catch (e) {
+      console.error('Failed to delete', e);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      if (editingEmployee) {
+        await api.updateEmployee(editingEmployee.id, formData);
+      } else {
+        await api.createEmployee(formData);
+      }
+      setIsModalOpen(false);
+      fetchEmployees();
+    } catch (err) {
+      console.error("Failed to save employee", err);
+    } finally {
+      setIsSaving(false);
+    }
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -47,7 +91,10 @@ export default function EmployeesPage() {
           <p className="text-zinc-400 mt-1">Manage your workforce data.</p>
         </div>
         
-        <button className="flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-400 transition-colors">
+        <button 
+          onClick={openAddModal}
+          className="flex items-center justify-center rounded-lg bg-emerald-500 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-400 transition-colors"
+        >
           <Plus className="mr-2 h-4 w-4" />
           Add Employee
         </button>
@@ -63,11 +110,10 @@ export default function EmployeesPage() {
             <input
               type="text"
               name="search"
-              id="search"
               value={search}
               onChange={(e) => {
                 setSearch(e.target.value);
-                setPage(1); // reset to page 1 on new search
+                setPage(1); 
               }}
               className="block w-full rounded-md border-0 py-2 pl-10 bg-black/40 text-white shadow-sm ring-1 ring-inset ring-zinc-800 placeholder:text-zinc-500 focus:ring-2 focus:ring-inset focus:ring-emerald-500 sm:text-sm sm:leading-6 transition-all"
               placeholder="Search by name, department, or country..."
@@ -86,7 +132,7 @@ export default function EmployeesPage() {
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">Country</th>
                 <th scope="col" className="px-3 py-3.5 text-left text-sm font-semibold text-white">Salary</th>
                 <th scope="col" className="relative py-3.5 pl-3 pr-4 sm:pr-6">
-                  <span className="sr-only">Edit</span>
+                  <span className="sr-only">Actions</span>
                 </th>
               </tr>
             </thead>
@@ -121,9 +167,14 @@ export default function EmployeesPage() {
                       ${person.salary.toLocaleString()}
                     </td>
                     <td className="relative whitespace-nowrap py-4 pl-3 pr-4 text-right text-sm font-medium sm:pr-6">
-                      <button className="text-emerald-500 hover:text-emerald-400 transition-colors">
-                        Edit
-                      </button>
+                      <div className="flex justify-end gap-3">
+                        <button onClick={() => openEditModal(person)} className="text-blue-500 hover:text-blue-400 transition-colors">
+                          <Edit2 className="h-4 w-4" />
+                        </button>
+                        <button onClick={() => handleDelete(person.id)} className="text-red-500 hover:text-red-400 transition-colors">
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))
@@ -167,6 +218,66 @@ export default function EmployeesPage() {
           </div>
         )}
       </div>
+
+      {/* Slide-over / Modal for Add/Edit */}
+      {isModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setIsModalOpen(false)} />
+          <div className="relative z-50 w-full max-w-lg card-glass rounded-2xl p-6 shadow-2xl">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-xl font-semibold text-white">
+                {editingEmployee ? 'Edit Employee' : 'Add Employee'}
+              </h2>
+              <button onClick={() => setIsModalOpen(false)} className="text-zinc-400 hover:text-white">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+            
+            <form onSubmit={handleSubmit} className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">Full Name</label>
+                <input required type="text" value={formData.full_name || ''} onChange={e => setFormData({...formData, full_name: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">Email</label>
+                <input required type="email" value={formData.email || ''} onChange={e => setFormData({...formData, email: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">Job Title</label>
+                  <input required type="text" value={formData.job_title || ''} onChange={e => setFormData({...formData, job_title: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">Department</label>
+                  <input required type="text" value={formData.department || ''} onChange={e => setFormData({...formData, department: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">Country</label>
+                  <input required type="text" value={formData.country || ''} onChange={e => setFormData({...formData, country: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-zinc-300">Salary</label>
+                  <input required type="number" value={formData.salary || ''} onChange={e => setFormData({...formData, salary: Number(e.target.value)})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-zinc-300">Hire Date</label>
+                <input required type="date" value={formData.hire_date || ''} onChange={e => setFormData({...formData, hire_date: e.target.value})} className="mt-1 block w-full rounded-md border-0 py-1.5 px-3 bg-zinc-900 text-white ring-1 ring-inset ring-zinc-800 focus:ring-2 focus:ring-emerald-500 sm:text-sm sm:leading-6" />
+              </div>
+              <div className="mt-6 flex justify-end gap-3">
+                <button type="button" onClick={() => setIsModalOpen(false)} className="rounded-md px-3 py-2 text-sm font-semibold text-zinc-300 hover:text-white transition-colors">
+                  Cancel
+                </button>
+                <button type="submit" disabled={isSaving} className="inline-flex justify-center rounded-md bg-emerald-500 px-3 py-2 text-sm font-semibold text-white shadow-sm hover:bg-emerald-400 focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-emerald-500 disabled:opacity-50 transition-colors">
+                  {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Save Employee'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
