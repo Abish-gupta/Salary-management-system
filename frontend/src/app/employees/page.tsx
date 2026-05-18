@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { api, type Employee, type PaginatedResponse } from '@/lib/api';
-import { Search, Plus, Loader2, Edit2, Trash2, X } from 'lucide-react';
+import { Search, Plus, Loader2, Edit2, Trash2, X, Database } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
 
@@ -22,9 +22,14 @@ export default function EmployeesPage() {
   const [editingEmployee, setEditingEmployee] = useState<Employee | null>(null);
   const [formData, setFormData] = useState<Partial<Employee>>({});
   const [isSaving, setIsSaving] = useState(false);
+  const [isSleeping, setIsSleeping] = useState(false);
 
   const fetchEmployees = async () => {
     setLoading(true);
+    const sleepTimer = setTimeout(() => {
+      setIsSleeping(true);
+    }, 2000);
+
     try {
       const skip = (page - 1) * limit;
       const res = await api.getEmployees(skip, limit, search);
@@ -32,9 +37,12 @@ export default function EmployeesPage() {
     } catch (error) {
       console.error("Failed to fetch employees", error);
     } finally {
+      clearTimeout(sleepTimer);
+      setIsSleeping(false);
       setLoading(false);
     }
   };
+
 
   useEffect(() => {
     const timer = setTimeout(() => {
@@ -99,6 +107,20 @@ export default function EmployeesPage() {
           Add Employee
         </button>
       </div>
+
+      {isSleeping && (
+        <div className="card-glass border border-emerald-500/20 bg-emerald-500/5 text-foreground rounded-xl p-4 flex items-start gap-3 animate-in slide-in-from-top duration-300">
+          <Database className="h-5 w-5 text-emerald-500 shrink-0 mt-0.5" />
+          <div className="space-y-1">
+            <h4 className="text-sm font-bold text-foreground flex items-center gap-1.5">
+              🔌 Server is waking up (Render Free Plan Cold Start)...
+            </h4>
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              The Render backend has hibernated due to inactivity. We've triggered a spin-up for you! This usually takes around 40-50 seconds to complete. Your employee data will load immediately once the backend is ready.
+            </p>
+          </div>
+        </div>
+      )}
 
       <div className="card-glass rounded-xl overflow-hidden">
         {/* Toolbar */}
