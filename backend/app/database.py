@@ -23,6 +23,7 @@ engine = create_engine(
     pool_pre_ping=True,
 )
 
+
 # Enable foreign key enforcement for SQLite (disabled by default in SQLite)
 @event.listens_for(engine, "connect")
 def enable_foreign_keys(dbapi_conn, _connection_record) -> None:
@@ -38,6 +39,7 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 # ── Declarative base ───────────────────────────────────────────────────────────
 class Base(DeclarativeBase):
     """Base class for all SQLAlchemy ORM models."""
+
     pass
 
 
