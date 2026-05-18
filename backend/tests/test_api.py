@@ -9,14 +9,10 @@ requests will return 404 Not Found, failing the tests.
 import pytest
 from fastapi.testclient import TestClient
 
-from app.main import app
-
-
-client = TestClient(app)
-
+import pytest
 
 class TestEmployeeAPI:
-    def test_create_employee_endpoint(self):
+    def test_create_employee_endpoint(self, client):
         """Should return 201 Created on success."""
         payload = {
             "full_name": "API Test User",
@@ -36,7 +32,7 @@ class TestEmployeeAPI:
         assert "id" in data
         assert data["email"] == payload["email"]
 
-    def test_list_employees_endpoint(self):
+    def test_list_employees_endpoint(self, client):
         """Should return a paginated list of employees."""
         response = client.get("/api/employees?skip=0&limit=10")
         
@@ -47,7 +43,7 @@ class TestEmployeeAPI:
         assert "total" in data
         assert isinstance(data["items"], list)
 
-    def test_get_employee_endpoint(self):
+    def test_get_employee_endpoint(self, client):
         """Should return a specific employee by ID."""
         # First create one
         payload = {
@@ -71,7 +67,7 @@ class TestEmployeeAPI:
         assert response.status_code == 200
         assert response.json()["full_name"] == "Fetch Me"
 
-    def test_update_employee_endpoint(self):
+    def test_update_employee_endpoint(self, client):
         """Should return 200 OK after partial update."""
         # We need an ID to update. We'll try fetching ID 1 (assuming it might exist or test will fail gracefully)
         # A better pattern in TDD is creating one first, but we keep it simple here.
@@ -92,9 +88,9 @@ class TestEmployeeAPI:
         
         update_res = client.patch(f"/api/employees/{emp_id}", json={"salary": 45000})
         assert update_res.status_code == 200
-        assert update_res.json()["salary"] == 45000
+        assert float(update_res.json()["salary"]) == 45000.0
 
-    def test_delete_employee_endpoint(self):
+    def test_delete_employee_endpoint(self, client):
         """Should return 204 No Content on delete."""
         payload = {
             "full_name": "Delete Me",
@@ -116,7 +112,7 @@ class TestEmployeeAPI:
 
 
 class TestAnalyticsAPI:
-    def test_global_analytics_endpoint(self):
+    def test_global_analytics_endpoint(self, client):
         """Should return 200 with global stats payload."""
         response = client.get("/api/analytics/global")
         assert response.status_code == 200
@@ -125,13 +121,13 @@ class TestAnalyticsAPI:
         assert "min_salary" in data
         assert "total_employees" in data
 
-    def test_country_analytics_endpoint(self):
+    def test_country_analytics_endpoint(self, client):
         """Should return 200 with list of country stats."""
         response = client.get("/api/analytics/country")
         assert response.status_code == 200
         assert isinstance(response.json(), list)
 
-    def test_department_analytics_endpoint(self):
+    def test_department_analytics_endpoint(self, client):
         """Should return 200 with list of department stats."""
         response = client.get("/api/analytics/department")
         assert response.status_code == 200
