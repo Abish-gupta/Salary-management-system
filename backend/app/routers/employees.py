@@ -25,13 +25,20 @@ def list_employees(
     skip: int = Query(0, ge=0),
     limit: int = Query(10, ge=1, le=100),
     country: str | None = None,
+    department: str | None = None,
     job_title: str | None = None,
     search: str | None = None,
     db: Session = Depends(get_db)
 ) -> Any:
     """Retrieve a paginated list of employees with optional filtering."""
     items, total = employee_service.list_employees(
-        db, skip=skip, limit=limit, country=country, job_title=job_title, search=search
+        db, 
+        skip=skip, 
+        limit=limit, 
+        country=country, 
+        department=department, 
+        job_title=job_title, 
+        search=search
     )
     return {
         "items": items, 

@@ -175,6 +175,38 @@ class TestListEmployees:
         assert total == 1
         assert items[0].full_name == "Alice Smith"
 
+    def test_list_employees_search_by_department(self, db_session: Session, seed_employees):
+        """Should perform ILIKE search on department."""
+        from app.services import employee_service
+
+        items, total = employee_service.list_employees(
+            db_session, skip=0, limit=10, search="engineering"
+        )
+        # All seeded employees have department "Engineering" by default in make_employee_data
+        assert total == 3
+        assert len(items) == 3
+
+    def test_list_employees_search_by_country(self, db_session: Session, seed_employees):
+        """Should perform ILIKE search on country."""
+        from app.services import employee_service
+
+        items, total = employee_service.list_employees(
+            db_session, skip=0, limit=10, search="india"
+        )
+        assert total == 1
+        assert items[0].country == "India"
+
+    def test_list_employees_search_by_job_title(self, db_session: Session, seed_employees):
+        """Should perform ILIKE search on job_title."""
+        from app.services import employee_service
+
+        items, total = employee_service.list_employees(
+            db_session, skip=0, limit=10, search="manager"
+        )
+        assert total == 2
+        assert all("manager" in i.job_title.lower() for i in items)
+
+
 
 # ── Update Employee Tests ──────────────────────────────────────────────────────
 

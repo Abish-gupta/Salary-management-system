@@ -33,15 +33,46 @@ class TestEmployeeAPI:
         assert data["email"] == payload["email"]
 
     def test_list_employees_endpoint(self, client):
-        """Should return a paginated list of employees."""
+        """Should return a paginated list of employees with optional country and department filtering."""
+        # Ensure we have at least these seeded records
+        client.post("/api/employees", json={
+            "full_name": "API Test User 1",
+            "email": "api.test1@example.com",
+            "job_title": "Developer",
+            "department": "Engineering",
+            "country": "UK",
+            "salary": 80000,
+            "hire_date": "2023-05-10"
+        })
+        client.post("/api/employees", json={
+            "full_name": "API Test User 2",
+            "email": "api.test2@example.com",
+            "job_title": "Manager",
+            "department": "Sales",
+            "country": "India",
+            "salary": 90000,
+            "hire_date": "2023-05-10"
+        })
+
         response = client.get("/api/employees?skip=0&limit=10")
-        
         assert response.status_code == 200
         
         data = response.json()
         assert "items" in data
         assert "total" in data
         assert isinstance(data["items"], list)
+
+        # Test country filter
+        res_country = client.get("/api/employees?country=India")
+        assert res_country.status_code == 200
+        assert res_country.json()["total"] >= 1
+        assert any(item["country"] == "India" for item in res_country.json()["items"])
+
+        # Test department filter
+        res_dept = client.get("/api/employees?department=Sales")
+        assert res_dept.status_code == 200
+        assert res_dept.json()["total"] >= 1
+        assert any(item["department"] == "Sales" for item in res_dept.json()["items"])
 
     def test_get_employee_endpoint(self, client):
         """Should return a specific employee by ID."""

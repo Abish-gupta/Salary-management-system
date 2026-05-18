@@ -7,6 +7,7 @@ database exceptions, raising appropriate HTTPExceptions.
 
 from typing import Optional, Tuple
 from fastapi import HTTPException
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
 
@@ -52,6 +53,7 @@ def list_employees(
     skip: int = 0,
     limit: int = 10,
     country: Optional[str] = None,
+    department: Optional[str] = None,
     job_title: Optional[str] = None,
     search: Optional[str] = None,
 ) -> Tuple[list[Employee], int]:
@@ -66,13 +68,23 @@ def list_employees(
     if country:
         query = query.filter(Employee.country == country)
 
+    if department:
+        query = query.filter(Employee.department == department)
+
     if job_title:
         query = query.filter(Employee.job_title == job_title)
 
     if search:
-        # Simple ILIKE search on full_name
+        # Case-insensitive search on full_name, department, country, and job_title
         search_term = f"%{search}%"
-        query = query.filter(Employee.full_name.ilike(search_term))
+        query = query.filter(
+            or_(
+                Employee.full_name.ilike(search_term),
+                Employee.department.ilike(search_term),
+                Employee.country.ilike(search_term),
+                Employee.job_title.ilike(search_term),
+            )
+        )
 
     # Get total count before pagination
     total = query.count()

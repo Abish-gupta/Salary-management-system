@@ -10,10 +10,15 @@ function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
+const COUNTRIES = ['USA', 'India', 'Brazil', 'Japan', 'Canada', 'UK', 'Germany', 'Australia', 'Singapore'];
+const DEPARTMENTS = ['Engineering', 'Sales', 'Product', 'Marketing', 'Design', 'Operations', 'HR', 'Finance', 'Legal'];
+
 export default function EmployeesPage() {
   const [data, setData] = useState<PaginatedResponse<Employee> | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
+  const [country, setCountry] = useState('');
+  const [department, setDepartment] = useState('');
   const [page, setPage] = useState(1);
   const limit = 10;
 
@@ -32,7 +37,7 @@ export default function EmployeesPage() {
 
     try {
       const skip = (page - 1) * limit;
-      const res = await api.getEmployees(skip, limit, search);
+      const res = await api.getEmployees(skip, limit, search, country, department);
       setData(res);
     } catch (error) {
       console.error("Failed to fetch employees", error);
@@ -49,7 +54,7 @@ export default function EmployeesPage() {
       fetchEmployees();
     }, 300);
     return () => clearTimeout(timer);
-  }, [page, limit, search]);
+  }, [page, limit, search, country, department]);
 
   const openAddModal = () => {
     setEditingEmployee(null);
@@ -124,7 +129,7 @@ export default function EmployeesPage() {
 
       <div className="card-glass rounded-xl overflow-hidden">
         {/* Toolbar */}
-        <div className="p-4 border-b border-border flex items-center gap-4 bg-secondary/30">
+        <div className="p-4 border-b border-border flex flex-col md:flex-row md:items-center justify-between gap-4 bg-secondary/30">
           <div className="relative flex-1 max-w-md">
             <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
               <Search className="h-5 w-5 text-muted-foreground" aria-hidden="true" />
@@ -138,8 +143,52 @@ export default function EmployeesPage() {
                 setPage(1); 
               }}
               className="block w-full rounded-md border border-border py-2 pl-10 bg-background text-foreground shadow-sm placeholder:text-muted-foreground focus:ring-2 focus:ring-inset focus:ring-emerald-500 sm:text-sm sm:leading-6 focus:outline-none transition-all"
-              placeholder="Search by name, department, or country..."
+              placeholder="Search keyword..."
             />
+          </div>
+
+          <div className="flex flex-wrap items-center gap-3">
+            <select
+              value={department}
+              onChange={(e) => {
+                setDepartment(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-md border border-border bg-background text-foreground py-1.5 px-3 text-sm shadow-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="">All Departments</option>
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+
+            <select
+              value={country}
+              onChange={(e) => {
+                setCountry(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-md border border-border bg-background text-foreground py-1.5 px-3 text-sm shadow-sm focus:ring-2 focus:ring-emerald-500 focus:outline-none transition-all cursor-pointer"
+            >
+              <option value="">All Countries</option>
+              {COUNTRIES.map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+
+            {(search || department || country) && (
+              <button
+                onClick={() => {
+                  setSearch('');
+                  setDepartment('');
+                  setCountry('');
+                  setPage(1);
+                }}
+                className="text-xs font-semibold text-emerald-500 hover:text-emerald-400 transition-colors flex items-center gap-1 ml-2"
+              >
+                Clear Filters
+              </button>
+            )}
           </div>
         </div>
 

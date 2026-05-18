@@ -34,11 +34,19 @@ export interface PaginatedResponse<T> {
 
 export const api = {
   // --- Employee Endpoints ---
-  async getEmployees(skip = 0, limit = 10, search = ''): Promise<PaginatedResponse<Employee>> {
+  async getEmployees(
+    skip = 0, 
+    limit = 10, 
+    search = '', 
+    country = '', 
+    department = ''
+  ): Promise<PaginatedResponse<Employee>> {
     const params = new URLSearchParams({
       skip: skip.toString(),
       limit: limit.toString(),
-      ...(search ? { search } : {})
+      ...(search ? { search } : {}),
+      ...(country ? { country } : {}),
+      ...(department ? { department } : {})
     });
     
     const res = await fetch(`${API_BASE_URL}/employees?${params.toString()}`);
