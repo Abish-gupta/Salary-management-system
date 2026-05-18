@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * API Client for interacting with the Python FastAPI Backend.
  * Uses native fetch API.
@@ -75,6 +76,12 @@ export const api = {
   async getCountryStats(): Promise<any[]> {
     const res = await fetch(`${API_BASE_URL}/analytics/country`);
     if (!res.ok) throw new Error('Failed to fetch country analytics');
+    return res.json();
+  },
+
+  async getSpecificCountryStats(countryName: string): Promise<any> {
+    const res = await fetch(`${API_BASE_URL}/analytics/country/${encodeURIComponent(countryName)}`);
+    if (!res.ok) throw new Error('Failed to fetch specific country analytics');
     return res.json();
   },
 
