@@ -4,7 +4,14 @@
  * Uses native fetch API.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+// Formats the API base URL cleanly to ensure it always ends in '/api' and handles trailing slashes safely.
+let rawUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000';
+rawUrl = rawUrl.replace(/\/+$/, ''); // Strip trailing slashes
+if (!rawUrl.endsWith('/api')) {
+  rawUrl = `${rawUrl}/api`;
+}
+const API_BASE_URL = rawUrl;
+
 
 export interface Employee {
   id: number;

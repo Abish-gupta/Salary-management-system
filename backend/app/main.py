@@ -32,14 +32,14 @@ app = FastAPI(
 )
 
 # CORS middleware — allows the Next.js frontend to communicate with the API.
-# In production, restrict origins to the actual frontend domain.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:3000"],
-    allow_credentials=True,
+    allow_origins=["*"],
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
 
 
 from app.routers import employees, analytics
