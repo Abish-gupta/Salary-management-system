@@ -26,13 +26,19 @@ class EmployeeCreate(BaseModel):
     All fields are required except currency (defaults to USD).
     """
 
-    full_name: str = Field(..., min_length=1, max_length=200, description="Employee's full name")
+    full_name: str = Field(
+        ..., min_length=1, max_length=200, description="Employee's full name"
+    )
     email: EmailStr = Field(..., description="Unique work email address")
     job_title: str = Field(..., min_length=1, max_length=100)
     department: str = Field(..., min_length=1, max_length=100)
     country: str = Field(..., min_length=1, max_length=100)
-    salary: Decimal = Field(..., gt=0, description="Annual salary — must be greater than zero")
-    currency: str = Field(default="USD", min_length=3, max_length=3, description="ISO 4217 currency code")
+    salary: Decimal = Field(
+        ..., gt=0, description="Annual salary — must be greater than zero"
+    )
+    currency: str = Field(
+        default="USD", min_length=3, max_length=3, description="ISO 4217 currency code"
+    )
     hire_date: date = Field(..., description="Date when the employee joined")
 
     @field_validator("full_name", mode="before")
