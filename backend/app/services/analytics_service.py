@@ -73,3 +73,37 @@ def get_salary_stats_by_department(db: Session) -> List[Dict[str, Any]]:
         }
         for row in results
     ]
+
+
+def get_specific_country_stats(db: Session, country: str) -> Dict[str, Any]:
+    """Calculate min, max, average salary and job title averages for a specific country."""
+    # Overall country stats
+    country_stats = db.query(
+        func.count(Employee.id).label("total_employees"),
+        func.min(Employee.salary).label("min_salary"),
+        func.max(Employee.salary).label("max_salary"),
+        func.avg(Employee.salary).label("avg_salary")
+    ).filter(func.lower(Employee.country) == country.lower()).first()
+
+    total = country_stats.total_employees if country_stats and country_stats.total_employees else 0
+
+    # Job title stats within this country
+    job_stats = db.query(
+        Employee.job_title,
+        func.avg(Employee.salary).label("avg_salary")
+    ).filter(func.lower(Employee.country) == country.lower()).group_by(Employee.job_title).all()
+
+    return {
+        "country": country,
+        "total_employees": total,
+        "min_salary": float(country_stats.min_salary) if total > 0 else 0.0,
+        "max_salary": float(country_stats.max_salary) if total > 0 else 0.0,
+        "avg_salary": float(country_stats.avg_salary) if total > 0 else 0.0,
+        "job_titles": [
+            {
+                "job_title": row.job_title,
+                "avg_salary": float(row.avg_salary)
+            }
+            for row in job_stats
+        ]
+    }

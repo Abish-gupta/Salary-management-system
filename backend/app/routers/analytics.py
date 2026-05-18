@@ -26,3 +26,9 @@ def get_country_analytics(db: Session = Depends(get_db)) -> Any:
 def get_department_analytics(db: Session = Depends(get_db)) -> Any:
     """Retrieve salary statistics grouped by department."""
     return analytics_service.get_salary_stats_by_department(db)
+
+
+@router.get("/country/{country_name}", response_model=Dict[str, Any])
+def get_specific_country_analytics(country_name: str, db: Session = Depends(get_db)) -> Any:
+    """Retrieve salary statistics and job titles for a specific country."""
+    return analytics_service.get_specific_country_stats(db, country_name)
