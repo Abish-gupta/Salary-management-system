@@ -6,7 +6,6 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Users, Building2, PanelLeftClose, PanelLeftOpen } from 'lucide-react';
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
-import { ThemeToggle } from './ThemeToggle';
 
 function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -65,9 +64,6 @@ export function Sidebar() {
             );
           })}
         </nav>
-      </div>
-      <div className="border-t border-border p-4">
-        <ThemeToggle isCollapsed={isCollapsed} />
       </div>
     </div>
   );
