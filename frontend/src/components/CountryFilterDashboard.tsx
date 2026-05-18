@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { api } from "@/lib/api"
-import { Banknote, TrendingUp, TrendingDown, Briefcase } from "lucide-react"
+import { Banknote, TrendingUp, TrendingDown } from "lucide-react"
 
 interface JobTitleStat {
   job_title: string;
@@ -20,6 +20,7 @@ interface CountryStats {
 
 export function CountryFilterDashboard({ countries }: { countries: string[] }) {
   const [selectedCountry, setSelectedCountry] = useState<string>("")
+  const [selectedJobTitle, setSelectedJobTitle] = useState<string>("")
   const [stats, setStats] = useState<CountryStats | null>(null)
   const [loading, setLoading] = useState(false)
 
@@ -45,17 +46,33 @@ export function CountryFilterDashboard({ countries }: { countries: string[] }) {
           <p className="text-sm text-muted-foreground">Detailed salary insights by region and job title.</p>
         </div>
         
-        <div className="mt-4 sm:mt-0">
+        <div className="mt-4 sm:mt-0 flex flex-col sm:flex-row gap-3">
           <select
             value={selectedCountry}
-            onChange={(e) => setSelectedCountry(e.target.value)}
-            className="w-48 bg-background border border-border text-foreground text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 outline-none"
+            onChange={(e) => {
+              setSelectedCountry(e.target.value)
+              setSelectedJobTitle("")
+            }}
+            className="w-full sm:w-48 bg-background border border-border text-foreground text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 outline-none"
           >
             <option value="">Select a country...</option>
             {countries.map((c) => (
               <option key={c} value={c}>{c}</option>
             ))}
           </select>
+
+          {stats && stats.job_titles && stats.job_titles.length > 0 && (
+            <select
+              value={selectedJobTitle}
+              onChange={(e) => setSelectedJobTitle(e.target.value)}
+              className="w-full sm:w-48 bg-background border border-border text-foreground text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5 outline-none animate-in fade-in zoom-in duration-300"
+            >
+              <option value="">All Job Titles</option>
+              {stats.job_titles.map((job) => (
+                <option key={job.job_title} value={job.job_title}>{job.job_title}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 
@@ -93,10 +110,14 @@ export function CountryFilterDashboard({ countries }: { countries: string[] }) {
             <div className="bg-secondary/50 rounded-lg p-4 border border-border">
               <p className="text-sm font-medium text-muted-foreground flex items-center gap-2">
                 <Banknote className="w-4 h-4 text-blue-500" />
-                Average Salary
+                {selectedJobTitle ? `Avg Salary (${selectedJobTitle})` : 'Average Salary'}
               </p>
               <p className="text-2xl font-bold mt-2 text-foreground">
-                ${Number(stats.avg_salary).toLocaleString(undefined, { maximumFractionDigits: 0 })}
+                ${Number(
+                  selectedJobTitle 
+                    ? stats.job_titles.find(j => j.job_title === selectedJobTitle)?.avg_salary ?? stats.avg_salary
+                    : stats.avg_salary
+                ).toLocaleString(undefined, { maximumFractionDigits: 0 })}
               </p>
             </div>
             
@@ -108,26 +129,6 @@ export function CountryFilterDashboard({ countries }: { countries: string[] }) {
               <p className="text-2xl font-bold mt-2 text-foreground">
                 ${Number(stats.max_salary).toLocaleString()}
               </p>
-            </div>
-          </div>
-
-          <div>
-            <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
-              <Briefcase className="w-4 h-4 text-primary" />
-              Average Salary by Job Title
-            </h3>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-              {stats.job_titles.map((job) => (
-                <div key={job.job_title} className="flex justify-between items-center p-3 rounded-md bg-secondary/30 border border-border hover:bg-secondary/50 transition-colors">
-                  <span className="text-sm font-medium text-foreground">{job.job_title}</span>
-                  <span className="text-sm font-semibold text-primary">
-                    ${Number(job.avg_salary).toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                  </span>
-                </div>
-              ))}
-              {stats.job_titles.length === 0 && (
-                <div className="col-span-full text-sm text-muted-foreground">No job title data found.</div>
-              )}
             </div>
           </div>
         </div>
